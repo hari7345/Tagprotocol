@@ -6,6 +6,7 @@ import metamask from "./images/metamask.png";
 import walletconnect from "./images/walletconnect.png";
 import trustwallet from "./images/trustwallet.png";
 import binancewallet from "./images/binance.png";
+// import { useWallet, UseWalletProvider } from 'use-wallet'
 import {
   Row,
   Col,
@@ -21,18 +22,57 @@ import {
   ModalHeader,
   ModalBody,
 } from "reactstrap";
+import { ethers } from "ethers";
 // import Web3 from "web3";
 export default function App() {
+  //const wallet = useWallet()
+  const [data, setdata] = useState({
+    address: "",
+    Balance: null,
+  });
   const [modalShow, setModalShow] = React.useState(false);
-  const connectMetamask = () => {
-    if (typeof window !== undefined && typeof window.ethereum !== undefined) {
-      window.ethereum.request({ metthod: "eth_requestAccounts" });
-      // web3=new Web3(window.ethereum)
+  const connectMetamask =()=>{
+    if(window.ethereum){
+      window.ethereum
+        .request({method:"eth_requestAccounts"})
+        .then((res)=>accountChangeHandler(res[0]))
+      }else{
+        alert("Install metamask extension!")
+      }
+  }
+  const connectWallet = () => {
+   
+    // if (typeof window !== undefined && typeof window.ethereum !== undefined) {
+    //   window.ethereum.request({ metthod: "eth_requestAccounts" });
+    //   // web3=new Web3(window.ethereum)
       setModalShow(true);
-    } else {
-      console.log("Please install Metamask");
-    }
+    // } else {
+    //   console.log("Please install Metamask");
+    // }
   };
+    // getbalance function for getting a balance in
+  // a right format with help of ethers
+  const getbalance = (address) => {
+  
+    // Requesting balance method
+    window.ethereum
+      .request({ 
+        method: "eth_getBalance", 
+        params: [address, "latest"] 
+      })
+      .then((balance) => {
+        // Setting balance
+        setdata({
+          Balance: ethers.utils.formatEther(balance),
+        });
+        console.log("BALANCE IS ", ethers.utils.formatEther(balance))
+      });
+  };
+  
+  const accountChangeHandler=(account)=>{
+    setdata({address:account})
+    getbalance(account)
+  }
   return (
     <React.Fragment>
       <div className="page-content">
@@ -63,7 +103,7 @@ export default function App() {
                         "border-radius": "18px",
                         color: "#1751aa",
                       }}
-                      onClick={connectMetamask}
+                      onClick={connectWallet}
                     >
                       Connect
                     </Button>
@@ -85,7 +125,7 @@ export default function App() {
           <Row xs={12}>
             <Col xs={6}>
               {" "}
-              <img src={metamask} height="60" alt="logo" />            
+              <img src={metamask} onClick={connectMetamask} height="60" alt="logo" />            
             </Col>
             <Col xs={6}>
               <img src={walletconnect} height="60" alt="logo" />
