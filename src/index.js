@@ -5,13 +5,17 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import { Web3ReactProvider } from '@web3-react/core'
 import { Web3Provider } from "@ethersproject/providers";
+
+
 const root = ReactDOM.createRoot(document.getElementById('root'));
 function getLibrary(provider, connector) {
   return new Web3Provider(provider);
 }
 root.render(
   <Web3ReactProvider getLibrary={getLibrary}>
-   <App />
+
+          <App />
+
 </Web3ReactProvider>
  
 );
