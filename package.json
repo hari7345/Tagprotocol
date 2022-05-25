@@ -157,6 +157,7 @@
     ]
   },
   "dependencies": {
+    "axios": "^0.27.2",
     "use-wallet": "^0.13.6"
   }
 }
