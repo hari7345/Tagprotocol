@@ -70,7 +70,7 @@ function App() {
     contractBNB.functions.totalSupply().then((totalSupply) => {
       let totalBnB=parseInt(totalSupply[0]["_hex"], 16)
       settotalBnBSupply(totalBnB);
-      console.log("TOTAL SUPPLY BNB",totalBnB);
+      console.log("TOTAL SUPPLY BNB",Number(totalBnB).toPrecision());
     });
 
     /////////////////TAG....................................................................
