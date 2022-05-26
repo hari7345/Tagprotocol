@@ -8,9 +8,9 @@ import walletconnect from "./images/walletconnect.png";
 import trustwallet from "./images/trustwallet.png";
 import binancewallet from "./images/binance.png";
 import { useWeb3React } from "@web3-react/core";
-import { connectors } from "./connector";
 import abiTag from "./tagAbi.json";
 import abiBnb from "./bnbabi.json";
+import tagNft from "./tagNft.json";
 import tokenNames from "./tokenNames.json";
 import { useWallet, UseWalletProvider } from "use-wallet";
 import {
@@ -32,17 +32,11 @@ import {
 } from "reactstrap";
 import { ethers } from "ethers";
 import Web3 from "web3";
-// import web3 from "web3/dist/web3.min.js";
 let WalletAddress = "0x76fCc1FC56302CFC920d039496fB8838E1b177cb";
 const TAGADDRESS = "0x717fb7B6d0c3d7f1421Cc60260412558283A6ae5";
 const BNBADDRESS = "0xB8c77482e45F1F44dE1745F52C74426C631bDD52";
 function App() {
   const wallet = useWallet();
-
-  const [data, setdata] = useState({
-    address: "",
-    Balance: null,
-  });
   const { active, account, library, connector, activate, deactivate } =
     useWeb3React();
   const [isConnected, setisConnect] = useState(false);
@@ -53,41 +47,38 @@ function App() {
   const [TagUserBalance, setTagUserBalance] = useState(0.0);
   const [BnbUserBalance, setBnbUserBalance] = useState(0.0);
   const [tosearchID, setsearchID] = useState(0.0);
-  const [searchtokenName, setsearchtokenName] = useState("--");
+  const [searchHash, setsearchHash] = useState("--");
+  const [hashkey, sethashkey] = useState(0);
   const connectWallet = () => {
+    /**Show Wallet selection modal */
     setModalShow(true);
   };
   const getbalance = async () => {
+    /**Get Balance for BNB & TAG */
     window.ethereum
       .request({ method: "eth_requestAccounts" })
       .then((res) => (WalletAddress = res[0]));
     /////////////////BNB...................................................................
     let provider = new ethers.providers.Web3Provider(window.ethereum);
-
     let signer = provider.getSigner();
-    const web3 = new Web3(
-      new Web3.providers.HttpProvider(
-        "https://mainnet.infura.io/v3/0e53d64607c342e085487ade83a47c4a"
-      )
-    );
     const contractBNB = new ethers.Contract(BNBADDRESS, abiBnb, signer);
     contractBNB.functions.balanceOf(WalletAddress).then((balance) => {
-      //     // Setting balance
+      // Setting balance
       console.log("BNB BALANCE IS ", parseInt(balance[0]["_hex"], 16));
       setBnbUserBalance(parseInt(balance[0]["_hex"], 16));
     });
     contractBNB.functions.totalSupply().then((totalSupply) => {
-      settotalBnBSupply(parseInt(totalSupply[0]["_hex"], 16));
-      console.log("TOTAL SUPPLY BNB", parseInt(totalSupply[0]["_hex"], 16));
+      let totalBnB=parseInt(totalSupply[0]["_hex"], 16)
+      settotalBnBSupply(totalBnB);
+      console.log("TOTAL SUPPLY BNB",totalBnB);
     });
-    // var CoursetroContract = web3.eth.functions.balanceOf(WalletAddress)
 
     /////////////////TAG....................................................................
     let abi_Tag = abiTag;
     const BscHttp = "https://bsc-dataseed1.binance.org:443";
     const Web3Client = new Web3(new Web3.providers.HttpProvider(BscHttp));
     const contractTAG = new Web3Client.eth.Contract(abi_Tag, TAGADDRESS);
-    const result = await contractTAG.methods.balanceOf(WalletAddress).call(); // 29803630997051883414242659
+    const result = await contractTAG.methods.balanceOf(WalletAddress).call();
     const format = Web3Client.utils.fromWei(result);
     const totalSupply = await contractTAG.methods.totalSupply().call();
     settotalTagSupply(totalSupply);
@@ -96,6 +87,7 @@ function App() {
     console.log("Total Supply", totalSupply);
   };
   function connectMetawallet() {
+    /**Connect To Metamask*/
     wallet.connect().then(() => {
       getbalance();
       setModalShow(false);
@@ -111,6 +103,7 @@ function App() {
     }
   }
   const getcurrrentTag = async () => {
+    /**Get corresponding Tag Balance*/
     try {
       await axios
         .get(
@@ -123,18 +116,62 @@ function App() {
     } catch (err) {}
   };
   function searchinput(e) {
+    /**Input token ID*/
     setsearchID(e.target.value);
   }
-  function searchID() {
-    console.log("INSIDE SEARCH");
-    console.log("OKEN NAMES", tosearchID);
-    if (tokenNames.hasOwnProperty(tosearchID)) {
-      setsearchtokenName(tokenNames[tosearchID]);
-    }else{
-      alert("NOT valid !")
-    }
+
+  async function searchID() {  
+    /**Search TokenID*/
+    let abi_Tag = tagNft;
+    const BscHttp = "https://bsc-dataseed1.binance.org:443";
+    const Web3Client = new Web3(new Web3.providers.HttpProvider(BscHttp));
+    const contractTAG = new Web3Client.eth.Contract(
+      abi_Tag,
+      "0x8D2252Ce5b346127aFCaf3f5472D12AA2C8A618e"
+    );
+    const searchtkID = await contractTAG.methods
+      .fetchTokenDetails(tosearchID)
+      .call();
+    setsearchHash(searchtkID[1]);
+
+    sethashkey(hashkey + 1);
+  }
+
+  async function searchIDCustom(value) {
+    /**Search PREv/NEXT Token*/
+    let abi_Tag = tagNft;
+    const BscHttp = "https://bsc-dataseed1.binance.org:443";
+    const Web3Client = new Web3(new Web3.providers.HttpProvider(BscHttp));
+    const contractTAG = new Web3Client.eth.Contract(
+      abi_Tag,
+      "0x8D2252Ce5b346127aFCaf3f5472D12AA2C8A618e"
+    );
+    const searchtkID = await contractTAG.methods
+      .fetchTokenDetails(value)
+      .call();
+    setsearchHash(searchtkID[1]);
+    sethashkey(hashkey + 1);
+  }
+
+  function getNextID() {
+      /**Set next tokenID*/
+    let nextID = Number(tosearchID) + 1;
+    nextID = String(nextID);
+    console.log("NEXTT", nextID);
+    setsearchID(nextID);
+    searchIDCustom(nextID);
+  }
+
+  function getPrevID() {
+    /**Set prev tokenID*/
+    let prevID = Number(tosearchID) - 1;
+    prevID = String(prevID);
+    console.log("PREVIS", prevID);
+    setsearchID(prevID);
+    searchIDCustom(prevID);
   }
   useEffect(() => {
+    /**Get current Tag price*/
     getcurrrentTag();
   }, []);
   return (
@@ -249,6 +286,7 @@ function App() {
                         <Col md="6">
                           <Input
                             bsSize="sm"
+                            value={tosearchID}
                             onChange={searchinput}
                             placeholder="Search ID"
                           />
@@ -259,7 +297,7 @@ function App() {
                             onClick={() => {
                               isConnected === true
                                 ? searchID()
-                                : alert("Login Required !");
+                                : alert("Not Connected to wallet !");
                             }}
                           >
                             Search
@@ -272,7 +310,7 @@ function App() {
                             size="sm"
                             onClick={() => {
                               isConnected === true
-                                ? console.log("SEARCH OK")
+                                ? getPrevID()
                                 : alert("Login Required !");
                             }}
                           >
@@ -280,14 +318,14 @@ function App() {
                           </Button>
                         </Col>
                         <Col md="5">
-                          <p>Name - {searchtokenName}</p>
+                          <p key={hashkey}>Hash - {searchHash}</p>
                         </Col>
                         <Col md="2">
                           <Button
                             size="sm"
                             onClick={() => {
                               isConnected === true
-                                ? console.log("SEARCH OK")
+                                ? getNextID()
                                 : alert("Login Required !");
                             }}
                           >
